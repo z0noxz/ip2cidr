@@ -48,14 +48,14 @@ function isip {
             ${ip[2]} -le 255 &&\
             ${ip[3]} -le 255 \
         ]]; then
-	    return 0
-	fi
+            return 0
+        fi
     fi
     return 1
 }
 
 # check if input already is a CIDR
-if [[ $1 =~ ^[0-9]{1,2}$ && ${1} -le 32 ]]; then
+if [[ $1 =~ ^[0-9]{1,2}$ && $1 -le 32 && $1 -gt 0 ]]; then
     echo "$1"
     exit
 fi
