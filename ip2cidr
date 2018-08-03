@@ -57,13 +57,13 @@ function isip {
 # check if input already is a CIDR
 if [[ $1 =~ ^[0-9]{1,2}$ && $1 -le 32 && $1 -gt 0 ]]; then
     echo "$1"
-    exit
+    exit 0
 fi
 
 # check if input is a valid IP, then return CIDR from IP
 if isip $1; then
     ip2cidr $1
-    exit
+    exit 0
 fi
 
 # if all fails print usage
@@ -76,3 +76,5 @@ LICENSE NOTICE
 $license
 EOF
 printf "%s\n\n" "$usage" >&2
+
+exit 1
