@@ -1,0 +1,78 @@
+#!/bin/sh
+read -d '' license << EOF
+Converts IPADDRESS to CIDR, or return CIDR if already a valid one
+Copyright (C) 2018 z0noxz, <chris@noxz.tech>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <http://www.gnu.org/licenses/>.
+EOF
+
+function ip2cidr {
+
+    local   ip=$1
+    local   OIFS=$IFS
+    local   D2B=({0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1})
+    local   binary=""
+    local   ones=""
+
+    IFS=\. read -ra ip <<< "$ip"
+    IFS=$OIFS
+
+    binary="${D2B[ip[0]]}${D2B[ip[1]]}${D2B[ip[2]]}${D2B[ip[3]]}"
+    ones="${binary//0}"
+
+    printf "%d\n" ${#ones}
+}
+
+function isip {
+
+    local   ip=$1
+    local   OIFS=$IFS
+
+    if [[ $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
+        IFS=\. read -ra ip <<< "$ip"
+        IFS=$OIFS
+        if [[ \
+            ${ip[0]} -le 255 &&\
+            ${ip[1]} -le 255 &&\
+            ${ip[2]} -le 255 &&\
+            ${ip[3]} -le 255 \
+        ]]; then
+	    return 0
+	fi
+    fi
+    return 1
+}
+
+# check if input already is a CIDR
+if [[ $1 =~ ^[0-9]{1,2}$ && ${1} -le 32 ]]; then
+    echo "$1"
+    exit
+fi
+
+# check if input is a valid IP, then return CIDR from IP
+if isip $1; then
+    ip2cidr $1
+    exit
+fi
+
+# if all fails print usage
+program_name="${0##*/}"
+read -d '' usage << EOF
+Usage: $program_name IPADDRESS
+
+LICENSE NOTICE
+
+$license
+EOF
+printf "%s\n\n" "$usage" >&2
