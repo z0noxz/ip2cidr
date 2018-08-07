@@ -1,7 +1,7 @@
 ip2cidr
 ======
-ip2cidr is a small and simple program for converting ip address (mask) into a
-CIDR, or retunring an already valid one.
+`ip2cidr` is a small and simple program for converting an ip address (mask)
+into a CIDR, or returning an already valid CIDR.
 
 Installation
 ------------
