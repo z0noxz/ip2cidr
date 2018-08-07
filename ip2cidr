@@ -1,6 +1,6 @@
 #!/bin/sh
-read -d '' license << EOF
-Converts IPADDRESS to CIDR, or return CIDR if already a valid one
+license='
+Converts IPADDRESS to CIDR, or returns CIDR if already a valid one
 Copyright (C) 2018 z0noxz, <chris@noxz.tech>
 
 This program is free software: you can redistribute it and/or modify
@@ -15,66 +15,73 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program. If not, see <http://www.gnu.org/licenses/>.
-EOF
+'
 
-function ip2cidr {
+count_ones() {
 
-    local   ip=$1
-    local   OIFS=$IFS
-    local   D2B=({0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1}{0..1})
-    local   binary=""
-    local   ones=""
+    dec=$1
+    base=2
+    result=0
 
-    IFS=\. read -ra ip <<< "$ip"
+    while [ "$dec" -ne 0 ]; do
+        if [ $((dec % base)) -eq 1 ]; then
+            result=$((result+1))
+        fi
+        dec=$((dec / base))
+    done
+
+    printf '%d' "$result"
+}
+
+do_ip2cidr() {
+
+    ip=$1
+    OIFS=$IFS
+    result=0
+    i=0
+
+    IFS=\.
+    for item in $ip; do
+        if [ "$item" -eq "$item" ] 2> /dev/null && \
+            [ "$item" -le 256 ] && [ "$item" -ge 0 ]; then
+            i=$((i+1))
+            case $i in
+                1)
+                    result=$((result+item*16777216))
+                    ;;
+                2)
+                    result=$((result+item*65536))
+                    ;;
+                3)
+                    result=$((result+item*256))
+                    ;;
+                4)
+                    result=$((result+item))
+                    ;;
+            esac
+        else
+            return 1
+        fi
+    done
     IFS=$OIFS
 
-    binary="${D2B[ip[0]]}${D2B[ip[1]]}${D2B[ip[2]]}${D2B[ip[3]]}"
-    ones="${binary//0}"
-
-    printf "%d\n" ${#ones}
+    printf '%d\n' "$(count_ones "$result")"
 }
 
-function isip {
-
-    local   ip=$1
-    local   OIFS=$IFS
-
-    if [[ $ip =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
-        IFS=\. read -ra ip <<< "$ip"
-        IFS=$OIFS
-        if [[ \
-            ${ip[0]} -le 255 &&\
-            ${ip[1]} -le 255 &&\
-            ${ip[2]} -le 255 &&\
-            ${ip[3]} -le 255 \
-        ]]; then
-            return 0
-        fi
-    fi
-    return 1
-}
-
-# check if input already is a CIDR
-if [[ $1 =~ ^[0-9]{1,2}$ && $1 -le 32 && $1 -gt 0 ]]; then
-    echo "$1"
-    exit 0
+# check if input already is a CIDR, and if not process it
+if [ "$1" -eq "$1" ] 2> /dev/null && [ "$1" -le 32 ] && [ "$1" -gt 0 ]; then
+    printf '%d\n' "$1" && exit 0
+else
+    do_ip2cidr "$1" && exit 0
 fi
 
-# check if input is a valid IP, then return CIDR from IP
-if isip $1; then
-    ip2cidr $1
-    exit 0
-fi
 
 # if all fails print usage
 program_name="${0##*/}"
-read -d '' usage << EOF
-Usage: $program_name IPADDRESS
+printf 'Usage: %s IPADDRESS
 
 LICENSE NOTICE
-
-$license
-EOF
-printf "%s\n\n" "$usage" >&2
+%s
+' "$program_name" "$license" >&2
 
 exit 1
