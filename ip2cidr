@@ -40,6 +40,10 @@ do_ip2cidr() {
     result=0
     i=0
 
+    if [ "$ip" = "" ]; then
+        return 1
+    fi
+
     IFS=\.
     for item in $ip; do
         if [ "$item" -eq "$item" ] 2> /dev/null && \
