@@ -19,31 +19,48 @@ along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 count_ones() {
 
+    # variable declaration
     dec=$1
     base=2
     result=0
+    found_zero=-1
 
+    # base convert decimal ip address to binary
     while [ "$dec" -ne 0 ]; do
         if [ $((dec % base)) -eq 1 ]; then
+            # check if mask is invalid
+            if [ "$found_zero" -eq 1 ]; then
+                printf '%d' "-1"
+                return 1
+            fi
+
+            # count one
             result=$((result+1))
+            found_zero=0
+        else
+            # detect zero after a one
+            if [ "$found_zero" -eq 0 ]; then
+                found_zero=1
+            fi
         fi
         dec=$((dec / base))
     done
 
+    # return value
     printf '%d' "$result"
+    return 0
 }
 
 do_ip2cidr() {
 
+    # variable declaration
     ip=$1
+    cidr=-1
     OIFS=$IFS
     result=0
     i=0
 
-    if [ "$ip" = "" ]; then
-        return 1
-    fi
-
+    # parse ip address
     IFS=\.
     for item in $ip; do
         if [ "$item" -eq "$item" ] 2> /dev/null && \
@@ -69,7 +86,24 @@ do_ip2cidr() {
     done
     IFS=$OIFS
 
-    printf '%d\n' "$(count_ones "$result")"
+    # check if ip address was valid, and if not fail
+    if [ "$ip" = "" ] || [ "$i" -ne 4 ]; then
+        return 1
+    fi
+
+    # calculate CIDR
+    cidr=$(count_ones "$result")
+
+    # check if CIDR is valid, and if not fail
+    if [ "$cidr" -eq -1 ]; then
+        return 1
+    fi
+
+    # print CIDR
+    printf '%d\n' "$cidr"
+
+    # success
+    return 0
 }
 
 # check if input already is a CIDR, and if not process it
@@ -83,6 +117,8 @@ fi
 # if all fails print usage
 program_name="${0##*/}"
 printf 'Usage: %s IPADDRESS
+
+The IPADDRESS must be a valid subnet mask.
 
 LICENSE NOTICE
 %s
