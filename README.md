@@ -11,7 +11,7 @@ install (if necessary as root):
 
     make clean install
 
-Usage example of ip2cidr
+Example usage of ip2cidr
 ------------------------
 Allow user to enter a subnet mask as either a CIDR or as an ip address:
 

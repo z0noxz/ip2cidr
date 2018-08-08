@@ -21,7 +21,7 @@
 #include <unistd.h>
 #include "ip2cidr.h"
 
-/* HAKMEM bit counter */
+/* HAKMEM bit counter (item 169) */
 int
 bit_count(unsigned int u) {
     unsigned int u_count;
