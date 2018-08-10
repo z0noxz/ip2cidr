@@ -21,6 +21,8 @@
 #include <unistd.h>
 #include "ip2cidr.h"
 
+const char *usage = "usage: ip2cidr <IP>";
+
 /* HAKMEM bit counter (item 169) */
 int
 bit_count(unsigned int u) {
@@ -32,7 +34,8 @@ bit_count(unsigned int u) {
 
 int
 main(int argc, char **argv) {
-    int ip, oip, cidr, n1, n2, n3, n4, input_size;
+    int ip, cidr,
+        n1, n2, n3, n4, input_size;
     int buffer_size = 80;
     char buffer[buffer_size];
     char *input;
@@ -53,7 +56,7 @@ main(int argc, char **argv) {
 
     /* no valid input, so show usage */
     } else {
-        fprintf(stderr, "usage: ip2cidr IPADDRESS\n");
+        fprintf(stderr, "%s\n", usage);
         return 1;
     }
 
@@ -65,18 +68,15 @@ main(int argc, char **argv) {
         n3 >= 0 && n3 <= 255 &&
         n4 >= 0 && n4 <= 255
     ) {
-        ip = n1 * 16777216 + n2 * 65536 + n3 * 256 + n4;
-        oip = ip;
-        cidr = bit_count(ip);
+        ip      = n1 * 0x1000000u + n2 * 0x10000u + n3 * 0x100u + n4;
+        cidr    = bit_count(ip);
 
-        /* check if ip is a valid subnet mask (ones are in succession) */
-        oip = oip >> (32-cidr) << (32-cidr);
-        if (oip != ip) {
+        /* check if ip is a valid subnet mask (all ones are in succession) */
+        if (cidr < 1 || cidr > 32 || ip != (0xffffffffu >> (32-cidr) << (32-cidr))) {
             fprintf(stderr, "error: not a subnet mask\n");
             return 1;
         }
-    } else if (sscanf(input, "%d", &n1) == 1 && n1 >= 1 && n1 <= 32) {
-        cidr = n1;
+    } else if (sscanf(input, "%d", &cidr) == 1 && cidr >= 1 && cidr <= 32) {
     } else {
         fprintf(stderr, "error: not a correctly formed ip address\n");
         return 1;
